@@ -11,8 +11,6 @@ class LESS {
 
 		if ( ! $config->lock_css AND LESS::modified($source, $target))
 		{
-			echo 'Recompiling!';
-
 			$less = new lessc($source);
 			$css  = $less->parse();
 
