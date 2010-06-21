@@ -12,4 +12,7 @@ return array
 	// The path (starting from DOCROOT) to where the Less files are
 	'less_path' => 'assets/css/less',
 
+	// Lock the CSS file and do not attempt to recompile (Use in production)
+	'lock_css'  => FALSE,
+
 );
