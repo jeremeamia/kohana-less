@@ -18,7 +18,18 @@ returns the path to the `.css` file compiled from LESS. For example:
 		<?php echo HTML::style(LESS::compile('test')) ?>
 	</head>
 
-Not too hard, right?
+Not too hard, right? The LESS files are only recompiled if their last modified
+times are more recent the the last modified time of the CSS file that was 
+generated. You can also pass an array of files to the compile method, and it 
+combine them together. You can use the second parameter to name the CSS file:
+
+	<head>
+		<title>LESS Test</title>
+		<?php echo HTML::style(LESS::compile('colors', 'fonts', 'layout'), 'styles') ?>
+	</head>
+
+Ordering is important in LESS, so you will want to load any files with 
+variables first.
 
 You can also configure the compiler to do some basic CSS minification as well,
 but this is turned off by default.
