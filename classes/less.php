@@ -10,32 +10,59 @@ class LESS {
 	/**
 	 * Compiles a `.less` file to a .css and returns the path to the compiled file.
 	 *
-	 * @param   string  The *name* of the `.less` file (no path or extension)
+	 * @param   mixed   The name(s) of the `.less` files (no path or extension required)
+	 * @param   string  The desired name of the target `.css` file
 	 * @return  string  The full path to the compiled `.css` file
 	 */
-	public static function compile($filename)
+	public static function compile($source_names, $target = NULL)
 	{
 		// Get the config items for this module
 		$config = Kohana::config('less');
 
+		// Prepare sources and targets
+		$source_names = (array) $source_names;
+		$target = ($target === NULL) ? $source_names[0] : $target;
+
 		// Get the relative paths to the files
-		$source = rtrim($config->less_path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$filename.'.less';
-		$target = rtrim($config->css_path, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.$filename.'.css';
+		$target = rtrim($config->css_path, DIRECTORY_SEPARATOR.'/').'/'.$target.'.css';
+
+		$sources = array();
+		foreach ($source_names as $source)
+		{
+			$sources[] = rtrim($config->less_path, DIRECTORY_SEPARATOR.'/').'/'.$source.'.less';
+		}
 
 		// If we need to compile again, then let's compile!
-		if ( ! $config->lock_css AND LESS::need_to_compile($source, $target))
+		if ( ! $config->lock_css AND LESS::need_to_compile($sources, $target))
 		{
-			$less = new lessc($source);
-			$css  = $less->parse();
+			// Combine sources into one LESS string
+			$less = '';
+			foreach ($sources as $source)
+			{
+				// Get LESS content
+				$less .= file_get_contents($source)."\n\n";
+			}
 
+			// Instantiate LESS compiler
+			$compiler = new lessc();
+
+			// Importing should be done by the module so that modified times can be compared
+			$compiler->importDisabled = TRUE;
+
+			// Parse the LESS file and convert to CSS
+			$css = $compiler->parse($less);
+
+			// Minify the CSS if configured to do so
 			if ($config->minify)
 			{
 				$css = LESS::minify($css);
 			}
 
+			// Write the CSS to the target file
 			file_put_contents($target, $css);
 		}
 
+		// Return the path of the target for use in `HTML::style()`
 		return $target;
 	}
 
@@ -56,7 +83,7 @@ class LESS {
 		// Remove any CSS comments
 		$css = preg_replace('#/\*.*?\*/#s', '', $css);
 
-		// Remove any unncessary whitespace
+		// Remove any unncessary whitespace or punctuation
 		$replacements = array
 		(
 			'; ' => ';',
@@ -77,22 +104,36 @@ class LESS {
 	 * modification times. Yes, I am using the `@` operator on `filemtime()`.
 	 * I want it to return `FALSE` if it fails without sending an `E_WARNING`.
 	 *
-	 * @param   string   Path to the source `.less` file
+	 * @param   array    Paths to the source `.less` files
 	 * @param   string   Path to the target `.css` file
-	 * @return  boolean  Whether or not the source file needs to be compiled
+	 * @return  boolean  Whether or not the source files needs to be compiled
 	 */
-	protected static function need_to_compile($source, $target)
+	protected static function need_to_compile(array $sources, $target)
 	{
-		// Get the last modified time for the source file
-		$source_modified = @filemtime($source);
-		if ($source_modified === FALSE)
-			throw new Kohana_Exception('The "last modified time" of the LESS file, :file, could not be determined. It may not exist.',
-				array(':file' => $source));
-
 		// Get the last modified time for the target file (if it exists)
 		$target_modified = @filemtime($target);
 
-		return ($target_modified === FALSE OR $source_modified > $target_modified);
+		// If target doesn't exist, we know we need to compile
+		$need_to_compile = $target_modified === FALSE;
+
+		// Check the source files modified times
+		foreach ($sources as $source)
+		{
+			// If we already know we need to compile, exit the loop
+			if ($need_to_compile)
+				break;
+
+			// Get the last modified time for the source file
+			$source_modified = @filemtime($source);
+			if ($source_modified === FALSE)
+				throw new Kohana_Exception('The "last modified time" of the LESS file, :file, could not be determined. It may not exist.',
+					array(':file' => $source));
+
+			// Check if the source file is newer than the target
+			$need_to_compile = $source_modified > $target_modified;
+		}
+
+		return $need_to_compile;
 	}
 
 }
