@@ -25,7 +25,7 @@ combine them together. You can use the second parameter to name the CSS file:
 
 	<head>
 		<title>LESS Test</title>
-		<?php echo HTML::style(LESS::compile('colors', 'fonts', 'layout'), 'styles') ?>
+		<?php echo HTML::style(LESS::compile(array('colors', 'fonts', 'layout'), 'styles')) ?>
 	</head>
 
 Ordering is important in LESS, so you will want to load any files with 
