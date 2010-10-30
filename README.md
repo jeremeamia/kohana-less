@@ -7,6 +7,11 @@ project and begin writing CSS with LESS right away. It is similar to the
 [LESS module by mongeslani](http://github.com/mongeslani/kohana-less) but
 simpler, and includes lessphp via a submodule.
 
+## Note
+
+I use SASS now, so I don't plan on updating this module anymore. You should 
+fork and maintain your own copy if you want to continue using this.
+
 ## How to Use
 
 The `LESS::compile()` function is all you need. It takes the name of a `.less`
