@@ -24,9 +24,9 @@ returns the path to the `.css` file compiled from LESS. For example:
 	</head>
 
 Not too hard, right? The LESS files are only recompiled if their last modified
-times are more recent the the last modified time of the CSS file that was 
+times are more recent than the last modified time of the CSS file that was 
 generated. You can also pass an array of files to the compile method, and it 
-combine them together. You can use the second parameter to name the CSS file:
+combines them together. You can use the second parameter to name the CSS file:
 
 	<head>
 		<title>LESS Test</title>
